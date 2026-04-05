@@ -14,9 +14,71 @@ const KEY = "fnd_v5";
 const BC="'Barlow Condensed',sans-serif",BW="'Barlow','Helvetica Neue',sans-serif",GS="Georgia,serif";
 const GOAL = 151, START = 196;
 const PROG = {
-  Monday:    { label:"PUSH",      color:T.org, bg:T.ogBg, bdr:T.ogBdr, icon:"🔺", focus:"Chest · Shoulders · Triceps",    ex:[{n:"Dumbbell Chest Press",s:3,r:12,w:15},{n:"Dumbbell Shoulder Press",s:3,r:12,w:10},{n:"Incline Dumbbell Press",s:3,r:12,w:12},{n:"Lateral Raises",s:3,r:15,w:8},{n:"Tricep Pushdown (Cable)",s:3,r:12,w:20}]},
-  Wednesday: { label:"PULL",      color:T.blu, bg:T.blBg, bdr:T.blBdr, icon:"🔻", focus:"Back · Biceps · Rear Delts",      ex:[{n:"Seated Cable Row",s:3,r:12,w:40},{n:"Lat Pulldown",s:3,r:12,w:45},{n:"Dumbbell Row (each side)",s:3,r:12,w:20},{n:"Face Pulls",s:3,r:15,w:25},{n:"Dumbbell Bicep Curl",s:3,r:12,w:12}]},
-  Friday:    { label:"LEGS+CORE", color:T.grn, bg:T.gnBg, bdr:T.gnBdr, icon:"⬆️", focus:"Quads · Glutes · Hamstrings · Core", ex:[{n:"Goblet Squat",s:3,r:12,w:25},{n:"Romanian Deadlift",s:3,r:12,w:30},{n:"Leg Press",s:3,r:12,w:90},{n:"Hip Thrust",s:3,r:15,w:25},{n:"Dead Bug (bodyweight)",s:3,r:10,w:0}]},
+  Monday:    { label:"PUSH",       color:T.org, bg:T.ogBg, bdr:T.ogBdr, icon:"🔺",
+    focus:"Chest · Shoulders · Triceps",
+    duration:"45–50 min",
+    warmup:[
+      {name:"Arm Circles",        dur:"30s each direction", note:"Loosen shoulder joint"},
+      {name:"Band Pull-Aparts",   dur:"15 reps",            note:"Activate rear delts before pressing"},
+      {name:"Wall Slides",        dur:"10 reps",            note:"Scapular mobility"},
+      {name:"Light Chest Press",  dur:"15 reps @ 50% weight",note:"Prime pec/delt pattern"},
+    ],
+    ex:[
+      {n:"Dumbbell Chest Press",     s:3,r:12,w:15},
+      {n:"Dumbbell Shoulder Press",  s:3,r:12,w:10},
+      {n:"Incline Dumbbell Press",   s:3,r:12,w:12},
+      {n:"Lateral Raises",           s:3,r:15,w:8 },
+      {n:"Tricep Pushdown (Cable)",  s:3,r:12,w:20},
+    ]},
+  Wednesday: { label:"PULL",       color:T.blu, bg:T.blBg, bdr:T.blBdr, icon:"🔻",
+    focus:"Back · Biceps · Rear Delts",
+    duration:"45–50 min",
+    warmup:[
+      {name:"Cat-Cow",               dur:"10 reps",            note:"Mobilize thoracic spine"},
+      {name:"Band Pull-Aparts",      dur:"15 reps",            note:"Activate rhomboids"},
+      {name:"Scapular Retractions",  dur:"10 reps",            note:"Prime the pulling muscles"},
+      {name:"Light Lat Pulldown",    dur:"15 reps @ 50% weight",note:"Groove the lat path"},
+    ],
+    ex:[
+      {n:"Seated Cable Row",          s:3,r:12,w:40},
+      {n:"Lat Pulldown",              s:3,r:12,w:45},
+      {n:"Dumbbell Row (each side)",  s:3,r:12,w:20},
+      {n:"Face Pulls",                s:3,r:15,w:25},
+      {n:"Dumbbell Bicep Curl",       s:3,r:12,w:12},
+    ]},
+  Friday:    { label:"LEGS+CORE",  color:T.grn, bg:T.gnBg, bdr:T.gnBdr, icon:"⬆️",
+    focus:"Quads · Glutes · Hamstrings · Core",
+    duration:"50–55 min",
+    warmup:[
+      {name:"Glute Bridges",         dur:"15 reps",            note:"Wake up glutes before squatting"},
+      {name:"Bodyweight Squat",      dur:"10 reps",            note:"Groove squat pattern"},
+      {name:"Hip Flexor Stretch",    dur:"30s each side",      note:"Open hips for deep squat depth"},
+      {name:"Lateral Band Walk",     dur:"10 steps each way",  note:"Activate abductors"},
+    ],
+    ex:[
+      {n:"Goblet Squat",             s:3,r:12,w:25},
+      {n:"Romanian Deadlift",        s:3,r:12,w:30},
+      {n:"Leg Press",                s:3,r:12,w:90},
+      {n:"Hip Thrust",               s:3,r:15,w:25},
+      {n:"Dead Bug (bodyweight)",    s:3,r:10,w:0 },
+    ]},
+  Saturday:  { label:"FULL BODY",  color:T.pur, bg:T.puBg, bdr:T.puBdr, icon:"⭐",
+    focus:"Compound Movements · Power · Stability",
+    duration:"50–55 min",
+    warmup:[
+      {name:"World's Greatest Stretch", dur:"5 reps each side", note:"Full body mobility in one move"},
+      {name:"Bodyweight Squat",         dur:"10 reps",          note:"Prime lower body"},
+      {name:"Arm Circles + Shoulder Rolls", dur:"30s",          note:"Open upper body"},
+      {name:"Dead Bug",                 dur:"8 reps",           note:"Activate deep core before loading"},
+    ],
+    ex:[
+      {n:"Dumbbell Deadlift",        s:3,r:10,w:30},
+      {n:"Dumbbell Chest Press",     s:3,r:10,w:15},
+      {n:"Dumbbell Reverse Lunge",   s:3,r:10,w:15},
+      {n:"Dumbbell Row (each side)", s:3,r:10,w:20},
+      {n:"Overhead Press",           s:3,r:10,w:10},
+      {n:"Plank Hold",               s:3,r:30,w:0 },
+    ]},
 };
 const MEALS = [
   {id:"breakfast", label:"Breakfast",       icon:"🌅", cal:400, pro:25, fib:8 },
@@ -236,6 +298,8 @@ Be specific: hormones, neurotransmitters, protein synthesis, fat oxidation.`;
         </div>
         <div style={{ display:"flex", gap:8, marginTop:10, flexWrap:"wrap" }}>
           {prog ? <Chip c={prog.color} bg={prog.bg} bdr={prog.bdr}>{prog.icon} {prog.label} Day</Chip>
+                : dn()==="Tuesday"||dn()==="Thursday" ? <Chip c={T.blu} bg={T.blBg} bdr={T.blBdr}>🚴 Zone 2 Cardio Day</Chip>
+                : dn()==="Sunday" ? <Chip c={T.dim} bg={T.bg} bdr={T.bdr}>🛌 Rest Day</Chip>
                 : <Chip c={T.blu} bg={T.blBg} bdr={T.blBdr}>🌿 Active Recovery</Chip>}
           {ctx.soberStreak>0 && <Chip c={T.grn} bg={T.gnBg} bdr={T.gnBdr}>🌟 {ctx.soberStreak} Day{ctx.soberStreak!==1?"s":""} Sober</Chip>}
           {ci.weight && <Chip c={T.pur} bg={T.puBg} bdr={T.puBdr}>⚖️ {ci.weight} lbs</Chip>}
@@ -282,6 +346,32 @@ Be specific: hormones, neurotransmitters, protein synthesis, fat oxidation.`;
         color={T.gold}
         btnColor={T.gold}
       />
+      {/* Daily Directive */}
+      <Card bg={T.gBg} bdr={T.gBdr}>
+        <SLabel>📋 Today's Directive</SLabel>
+        {(()=>{
+          const plan={
+            Monday:    {type:"strength",label:"PUSH Day",    color:T.org, directive:"Warm up 5 min → 5 exercises × 3 sets · ~45 min total. Focus: chest, shoulders, triceps. Progressive overload — beat last week's weights.",              cardio:""},
+            Tuesday:   {type:"cardio",  label:"Zone 2 Day",  color:T.blu, directive:"35 min Zone 2 cardio — walk, bike, or elliptical at conversational pace. This is your VO2 max session. Optional: add Pilates class for core + mobility.", cardio:"Zone 2 · 35 min"},
+            Wednesday: {type:"strength",label:"PULL Day",    color:T.blu, directive:"Warm up 5 min → 5 exercises × 3 sets · ~45 min total. Focus: back, biceps, rear delts. Pull with your elbows, not your hands.",                          cardio:""},
+            Thursday:  {type:"cardio",  label:"Zone 2 Day",  color:T.grn, directive:"35 min Zone 2 at 2pm to break the Lexapro energy cliff. Walk or bike at a pace where you can hold a conversation. This resets cortisol and focus.",       cardio:"Zone 2 · 35 min"},
+            Friday:    {type:"strength",label:"LEGS+CORE Day",color:T.grn, directive:"Warm up 5 min → 5 exercises × 3 sets · ~50 min total. Focus: quads, glutes, hamstrings, deep core. Biggest muscle groups = biggest metabolic impact.",    cardio:""},
+            Saturday:  {type:"strength",label:"FULL BODY Day",color:T.pur, directive:"Warm up 5 min → 6 compound exercises × 3 sets · ~50 min total. Lower volume, full body stimulus. Builds work capacity and movement quality.",              cardio:""},
+            Sunday:    {type:"rest",    label:"Rest Day",    color:T.dim, directive:"Complete rest or a gentle walk under 30 min. This is mandatory — muscle adaptation happens during recovery, not during training. Protect this day.",          cardio:""},
+          };
+          const today=plan[dn()];
+          if(!today) return null;
+          return (
+            <div>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                <span style={{ padding:"4px 12px", background:today.type==="strength"?T.ogBg:today.type==="cardio"?T.blBg:T.bg, border:`1.5px solid ${today.type==="strength"?T.ogBdr:today.type==="cardio"?T.blBdr:T.bdr}`, borderRadius:20, fontSize:13, fontWeight:800, color:today.color, fontFamily:BC }}>{today.label}</span>
+              </div>
+              <p style={{ margin:0, fontSize:14, color:T.mid, lineHeight:1.75, fontWeight:500 }}>{today.directive}</p>
+            </div>
+          );
+        })()}
+      </Card>
+
       <Card>
         <SLabel>Notes</SLabel>
         <textarea value={day.notes||""} onChange={e=>upd("notes",e.target.value)}
@@ -364,6 +454,7 @@ Tell her:
             <div>
               <div style={{ fontSize:30, fontWeight:900, color:prog.color, fontFamily:BC }}>{prog.icon} {prog.label}</div>
               <div style={{ fontSize:15, color:T.mid, marginTop:2, fontWeight:600 }}>{prog.focus}</div>
+              {prog.duration && <div style={{ fontSize:12, color:T.gold, marginTop:4, fontWeight:700 }}>⏱ {prog.duration}</div>}
             </div>
             <div style={{ textAlign:"right" }}>
               <div style={{ fontSize:30, fontWeight:900, color:done===total?T.grn:T.ink }}>{done}<span style={{ fontSize:18, color:T.dim, fontWeight:400 }}>/{total}</span></div>
@@ -373,6 +464,26 @@ Tell her:
           <div style={{ height:8, background:T.bdr, borderRadius:4, marginBottom:20, overflow:"hidden" }}>
             <div style={{ height:"100%", width:`${total>0?(done/total)*100:0}%`, background:`linear-gradient(90deg,${prog.color},${T.grn})`, borderRadius:4, transition:"width 0.5s" }}/>
           </div>
+
+          {/* WARMUP */}
+          {prog.warmup && (
+            <div style={{ background:T.gBg, border:`1.5px solid ${T.gBdr}`, borderRadius:14, padding:16, marginBottom:16 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                <span style={{ fontSize:11, fontWeight:800, color:T.gold, letterSpacing:"1.5px", textTransform:"uppercase", fontFamily:BC }}>🔥 Warmup · ~5 min</span>
+                <span style={{ fontSize:12, color:T.dim }}>Complete before lifting</span>
+              </div>
+              {prog.warmup.map((w,wi) => (
+                <div key={wi} style={{ display:"flex", gap:12, alignItems:"flex-start", paddingBottom:wi<prog.warmup.length-1?10:0, marginBottom:wi<prog.warmup.length-1?10:0, borderBottom:wi<prog.warmup.length-1?`1px solid ${T.bdr}`:"none" }}>
+                  <span style={{ fontSize:14, fontWeight:900, color:T.gold, fontFamily:BC, minWidth:18 }}>{wi+1}</span>
+                  <div>
+                    <div style={{ fontSize:15, fontWeight:700, color:T.ink }}>{w.name} <span style={{ color:T.gold, fontWeight:800, fontSize:14 }}>· {w.dur}</span></div>
+                    <div style={{ fontSize:12, color:T.dim, marginTop:3 }}>{w.note}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {prog.ex.map(ex => {
             const prev = getPrev(ex.n);
             const sets = lift.ex?.[ex.n]?.sets||[];
@@ -684,6 +795,15 @@ function WeekTab({ all, ctx }) {
   const wD=Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d.toISOString().split("T")[0]; });
   const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const FDYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+  const DAY_PLAN={
+    Monday:    {type:"strength",label:"PUSH",      color:T.org,note:"Chest · Shoulders · Triceps · ~45 min"},
+    Tuesday:   {type:"cardio",  label:"ZONE 2",    color:T.blu,note:"35 min walk/bike + optional Pilates"},
+    Wednesday: {type:"strength",label:"PULL",      color:T.blu,note:"Back · Biceps · Rear Delts · ~45 min"},
+    Thursday:  {type:"cardio",  label:"ZONE 2",    color:T.grn,note:"35 min walk/bike · best at 2pm"},
+    Friday:    {type:"strength",label:"LEGS+CORE", color:T.grn,note:"Quads · Glutes · Core · ~50 min"},
+    Saturday:  {type:"strength",label:"FULL BODY", color:T.pur,note:"Compound movements · ~50 min"},
+    Sunday:    {type:"rest",    label:"REST",      color:T.dim,note:"Active recovery or gentle walk"},
+  };
   let wCal=0,wPro=0;
   wD.forEach(d=>{ const day=all[d]; if(!day) return;
     const lg=MEALS.filter(m=>day.meals?.[m.id]?.logged);
@@ -758,16 +878,23 @@ Give a comprehensive weekly coaching review:
           const dc=lg.reduce((a,m)=>a+m.cal,0);
           const sv=day?.sober;
           return (
-            <div key={d} style={{ display:"flex", alignItems:"center", gap:10, padding:"13px 0", borderBottom:i<6?`1px solid ${T.bdr}`:"none", opacity:isFuture?0.3:1 }}>
-              <div style={{ width:36, fontSize:15, fontWeight:isToday?900:600, color:isToday?T.gold:T.mid, fontFamily:BC }}>{DAYS[i]}</div>
-              <div style={{ flex:1, display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
-                {prog&&<span style={{ padding:"3px 10px", background:hasStr?prog.bg:T.bg, border:`1.5px solid ${hasStr?prog.bdr:T.bdr}`, borderRadius:20, fontSize:12, fontWeight:700, color:hasStr?prog.color:T.dim, fontFamily:BC }}>{prog.label}</span>}
-                {hasCard&&<span style={{ padding:"3px 10px", background:T.gnBg, border:`1.5px solid ${T.gnBdr}`, borderRadius:20, fontSize:12, fontWeight:700, color:T.grn, fontFamily:BC }}>MOVE</span>}
-                {isToday&&<span style={{ padding:"3px 10px", background:T.gBg, border:`1.5px solid ${T.gBdr}`, borderRadius:20, fontSize:12, fontWeight:700, color:T.gold, fontFamily:BC }}>TODAY</span>}
-                {sv===true&&<span style={{ fontSize:16 }}>🌟</span>}
-                {sv===false&&<span style={{ fontSize:16 }}>💧</span>}
+            <div key={d} style={{ padding:"12px 0", borderBottom:i<6?`1px solid ${T.bdr}`:"none", opacity:isFuture?0.3:1 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ width:36, fontSize:15, fontWeight:isToday?900:600, color:isToday?T.gold:T.mid, fontFamily:BC, flexShrink:0 }}>{DAYS[i]}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, color:DAY_PLAN[FDYS[i]]?.color||T.dim, fontWeight:700, fontFamily:BC }}>
+                    {DAY_PLAN[FDYS[i]]?.type==="strength"?"💪 ":DAY_PLAN[FDYS[i]]?.type==="cardio"?"🚴 ":"🛌 "}{DAY_PLAN[FDYS[i]]?.label}
+                  </div>
+                  <div style={{ fontSize:11, color:T.dim, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{DAY_PLAN[FDYS[i]]?.note}</div>
+                </div>
+                <div style={{ display:"flex", gap:4, alignItems:"center", flexShrink:0 }}>
+                  {hasStr&&<span style={{ padding:"2px 8px", background:prog?.bg||T.puBg, border:`1px solid ${prog?.bdr||T.puBdr}`, borderRadius:20, fontSize:11, fontWeight:700, color:prog?.color||T.pur, fontFamily:BC }}>✓ LIFT</span>}
+                  {hasCard&&<span style={{ padding:"2px 8px", background:T.gnBg, border:`1px solid ${T.gnBdr}`, borderRadius:20, fontSize:11, fontWeight:700, color:T.grn, fontFamily:BC }}>✓ MOVE</span>}
+                  {sv===true&&<span style={{ fontSize:14 }}>🌟</span>}
+                  {sv===false&&<span style={{ fontSize:14 }}>💧</span>}
+                  {isToday&&<span style={{ padding:"2px 8px", background:T.gBg, border:`1px solid ${T.gBdr}`, borderRadius:20, fontSize:11, fontWeight:800, color:T.gold, fontFamily:BC }}>NOW</span>}
+                </div>
               </div>
-              <div style={{ fontSize:14, color:dc>0?T.ink:T.fnt, fontWeight:dc>0?700:400, minWidth:48, textAlign:"right" }}>{dc>0?dc:"–"}{dc>0&&<span style={{ fontSize:11, color:T.dim }}> cal</span>}</div>
             </div>
           );
         })}
