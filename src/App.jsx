@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import FuelTab from "./FuelTab.jsx";
 import WeeklyGoals from "./WeeklyGoals.jsx";
 import { loadFavorites, saveFavorites } from "./FavoritesManager.jsx";
+import PatternEngine from "./PatternEngine.jsx";
 const T = {
   bg:"#f5f4f0", sur:"#ffffff", card:"#ffffff", bdr:"#e0ddd6", bdrDk:"#c8c4bb",
   ink:"#1a1814", mid:"#4a4740", dim:"#8a877e", fnt:"#c0bdb5",
@@ -1042,6 +1043,9 @@ export default function App() {
         {tab==="sober" && <SoberTab all={all} upd={upd} day={dayData} ctx={ctx}/>}
         {tab==="week"  && <WeekTab  all={all} ctx={ctx} weekGoals={weekGoals} onSaveGoal={saveWeekGoal}/>}
       </div>
+
+      {/* AMBIENT PATTERN ENGINE — fires automatically as data is logged */}
+      <PatternEngine dayData={dayData} allData={all}/>
     </div>
   );
 }
