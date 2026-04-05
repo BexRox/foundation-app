@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import FuelTab from "./FuelTab.jsx";
 const T = {
   bg:"#f5f4f0", sur:"#ffffff", card:"#ffffff", bdr:"#e0ddd6", bdrDk:"#c8c4bb",
   ink:"#1a1814", mid:"#4a4740", dim:"#8a877e", fnt:"#c0bdb5",
@@ -500,70 +501,7 @@ Tell her:
     </div>
   );
 }
-function FuelTab({ day, upd, ctx }) {
-  const meals = day.meals||{};
-  const lg = MEALS.filter(m=>meals[m.id]?.logged);
-  const cal=lg.reduce((a,m)=>a+m.cal,0), pro=lg.reduce((a,m)=>a+m.pro,0), fib=lg.reduce((a,m)=>a+m.fib,0);
-  const skipping = !meals.snack1?.logged && !meals.snack2?.logged && lg.length>=2;
-  const fuelPrompt = `Rebecca's nutrition today: ${ctx.mealsLogged||"nothing logged yet"}. Calories: ${cal}/2000. Protein: ${pro}/120g. Fiber: ${fib}/35g. ${skipping?"She is currently skipping snacks which is her known pattern — call this out specifically.":""}
-Time of day context: it is ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}.
-Tell her:
-1. What's happening metabolically RIGHT NOW — blood sugar, insulin, muscle protein synthesis status
-2. How today's protein supports (or doesn't) muscle building in a deficit
-3. What her gut microbiome is doing with her fiber intake
-4. Exactly what to eat next and why given time of day
-${skipping?"5. The specific hormonal cascade that happens when she skips snacks and how it leads to the dinner blowup — cortisol, ghrelin, insulin spike.":""}`;
-  return (
-    <div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
-        {[
-          {l:"Calories",v:cal,max:2000,u:"kcal",c:T.gold,bg:T.gBg,bdr:T.gBdr},
-          {l:"Protein", v:pro,max:120, u:"g",   c:T.pur,  bg:T.puBg,bdr:T.puBdr},
-          {l:"Fiber",   v:fib,max:35,  u:"g",   c:T.grn,  bg:T.gnBg,bdr:T.gnBdr},
-        ].map(m => (
-          <div key={m.l} style={{ background:m.v>=m.max?m.bg:T.card, border:`1.5px solid ${m.v>=m.max?m.bdr:T.bdr}`, borderRadius:16, padding:16, textAlign:"center" }}>
-            <div style={{ fontSize:26, fontWeight:900, color:m.c, lineHeight:1 }}>{m.v}</div>
-            <div style={{ fontSize:11, color:T.mid, textTransform:"uppercase", letterSpacing:"0.5px", marginTop:4, fontFamily:BC, fontWeight:700 }}>{m.l}</div>
-            <div style={{ fontSize:11, color:T.dim, marginBottom:8 }}>/{m.max}{m.u}</div>
-            <Bar v={m.v} max={m.max} c={m.c} bg={m.bg}/>
-          </div>
-        ))}
-      </div>
-      {MEALS.map(meal => {
-        const logged = meals[meal.id]?.logged;
-        return (
-          <div key={meal.id} style={{ background:logged?T.gnBg:T.card, border:`1.5px solid ${logged?T.gnBdr:T.bdr}`, borderRadius:18, padding:18, marginBottom:12 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-              <button onClick={()=>upd("meals",{...meals,[meal.id]:{...meals[meal.id],logged:!logged}})} style={{ width:38, height:38, borderRadius:"50%", border:`2.5px solid ${logged?T.grn:T.bdr}`, background:logged?T.grn:"transparent", cursor:"pointer", flexShrink:0, fontSize:18, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:900 }}>
-                {logged?"✓":""}
-              </button>
-              <span style={{ fontSize:28 }}>{meal.icon}</span>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:18, fontWeight:800, color:logged?T.grn:T.ink }}>{meal.label}</div>
-                <div style={{ fontSize:13, color:T.mid, marginTop:3 }}>{meal.cal} cal · {meal.pro}g protein · {meal.fib}g fiber</div>
-              </div>
-            </div>
-            {logged && (
-              <input placeholder="What did you eat? (optional)" value={meals[meal.id]?.note||""}
-                onChange={e=>upd("meals",{...meals,[meal.id]:{...meals[meal.id],note:e.target.value}})}
-                style={{ marginTop:14, width:"100%", background:"transparent", border:"none", borderBottom:`2px solid ${T.bdr}`, color:T.mid, fontSize:15, padding:"6px 0", fontFamily:"inherit", outline:"none", boxSizing:"border-box" }}
-              />
-            )}
-          </div>
-        );
-      })}
-      <AIBlock
-        label="🧬 Metabolic Status"
-        prompt={fuelPrompt}
-        context={ctx}
-        addendum="Detail metabolic mechanisms: mTOR, insulin, gut microbiome, Lexapro appetite suppression. Plant-forward eater."
-        type="warn"
-        color={T.gold}
-        btnColor={T.gold}
-      />
-    </div>
-  );
-}
+
 function WatchTab({ day, upd, all, ctx }) {
   const w = day.watch||{};
   const dates = Object.keys(all).sort().slice(-14);
