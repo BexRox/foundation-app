@@ -110,7 +110,7 @@ function buildContext(all) {
 }
 async function ai(systemAddendum, userPrompt) {
   try {
-    const res = await fetch("/api/coach", {
+    const res = await fetch("/.netlify/functions/coach", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
