@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { SaveFavoriteModal, FavoritesPanel, loadFavorites } from "./FavoritesManager.jsx";
 
 const T = {
   bg:"#f5f4f0", sur:"#ffffff", card:"#ffffff", bdr:"#e0ddd6", bdrDk:"#c8c4bb",
@@ -70,6 +71,22 @@ function MacroBar({ label, value, max, color, bg }) {
       <div style={{ height:8, background:bg||T.bdr, borderRadius:4, overflow:"hidden" }}>
         <div style={{ height:"100%", width:`${Math.min(value/max*100,100)}%`, background:color, borderRadius:4, transition:"width 0.5s" }}/>
       </div>
+      {/* Favorites panel */}
+      {showFavorites && openSlot && (
+        <FavoritesPanel
+          onSelectFavorite={applyFavorite}
+          onClose={() => { setShowFavorites(false); setOpenSlot(null); }}
+        />
+      )}
+
+      {/* Save favorite modal */}
+      {saveFavSlot && (
+        <SaveFavoriteModal
+          items={saveFavSlot.items}
+          slotLabel={saveFavSlot.slotLabel}
+          onClose={() => setSaveFavSlot(null)}
+        />
+      )}
     </div>
   );
 }
@@ -243,6 +260,8 @@ function FoodSearchModal({ slotId, slotLabel, onAdd, onClose }) {
 
 export default function FuelTab({ day, upd, ctx }) {
   const [openSlot, setOpenSlot] = useState(null);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [saveFavSlot, setSaveFavSlot] = useState(null);
   const mealData = day.meals || {};
 
   function addFoodToSlot(slotId, foodEntry) {
@@ -272,6 +291,15 @@ export default function FuelTab({ day, upd, ctx }) {
   totals.fib  = Math.round(totals.fib  * 10) / 10;
   totals.carb = Math.round(totals.carb * 10) / 10;
   totals.fat  = Math.round(totals.fat  * 10) / 10;
+
+  function applyFavorite(fav) {
+    if (!openSlot) return;
+    for (const item of (fav.items||[])) {
+      addFoodToSlot(openSlot, { ...item, id: Date.now() + Math.random() });
+    }
+    setShowFavorites(false);
+    setOpenSlot(null);
+  }
 
   const snacking = (mealData.snack1?.items||[]).length === 0 && (mealData.snack2?.items||[]).length === 0
     && ((mealData.breakfast?.items||[]).length > 0 || (mealData.lunch?.items||[]).length > 0);
@@ -345,9 +373,12 @@ export default function FuelTab({ day, upd, ctx }) {
                   {hasFood ? `${slotTotals.cal} cal · ${slotTotals.pro.toFixed(1)}g protein · ${slotTotals.fib.toFixed(1)}g fiber` : slot.timeHint}
                 </div>
               </div>
-              <button onClick={() => setOpenSlot(slot.id)} style={{ padding:"8px 14px", background:T.blBg, border:`1.5px solid ${T.blBdr}`, borderRadius:10, color:T.blu, fontSize:13, fontWeight:800, cursor:"pointer", fontFamily:"'Barlow Condensed',sans-serif" }}>
-                + ADD
-              </button>
+              <div style={{ display:"flex", gap:6 }}>
+                <button onClick={()=>{setOpenSlot(slot.id);setShowFavorites(true);}} style={{ padding:"8px 10px", background:T.gBg, border:`1.5px solid ${T.gBdr}`, borderRadius:10, color:T.gold, fontSize:16, cursor:"pointer" }} title="Favorites">⭐</button>
+                <button onClick={() => setOpenSlot(slot.id)} style={{ padding:"8px 14px", background:T.blBg, border:`1.5px solid ${T.blBdr}`, borderRadius:10, color:T.blu, fontSize:13, fontWeight:800, cursor:"pointer", fontFamily:"'Barlow Condensed',sans-serif" }}>
+                  + ADD
+                </button>
+              </div>
             </div>
 
             {/* Food items */}
@@ -367,12 +398,18 @@ export default function FuelTab({ day, upd, ctx }) {
                 <button onClick={() => removeFoodFromSlot(slot.id, item.id)} style={{ background:"none", border:"none", color:T.fnt, fontSize:20, cursor:"pointer", padding:"0 4px", flexShrink:0 }}>×</button>
               </div>
             ))}
+            {/* Save as favorite */}
+            {slotItems.length > 0 && (
+              <button onClick={() => setSaveFavSlot({slotId:slot.id, slotLabel:slot.label, items:slotItems})} style={{ marginTop:10, width:"100%", padding:"9px", background:"transparent", border:`1.5px dashed ${T.gBdr}`, borderRadius:10, color:T.gold, fontSize:12, cursor:"pointer", fontWeight:700 }}>
+                ⭐ Save as Favorite
+              </button>
+            )}
           </div>
         );
       })}
 
       {/* Food search modal */}
-      {openSlot && (
+      {openSlot && !showFavorites && (
         <FoodSearchModal
           slotId={openSlot}
           slotLabel={MEAL_SLOTS.find(s => s.id === openSlot)?.label || ""}

@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import FuelTab from "./FuelTab.jsx";
+import WeeklyGoals from "./WeeklyGoals.jsx";
+import { loadFavorites, saveFavorites } from "./FavoritesManager.jsx";
 const T = {
   bg:"#f5f4f0", sur:"#ffffff", card:"#ffffff", bdr:"#e0ddd6", bdrDk:"#c8c4bb",
   ink:"#1a1814", mid:"#4a4740", dim:"#8a877e", fnt:"#c0bdb5",
@@ -824,27 +826,63 @@ function WeekTab({ all, ctx }) {
     else if(i>0) break;
     cd.setDate(cd.getDate()-1);
   }
+  // Get current week's goals
+  const mondayKey = (()=>{ const now=new Date(),dow=now.getDay(),mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1)); return mon.toISOString().split("T")[0]; })();
+  const thisWeekGoals = weekGoals?.[mondayKey];
+
   const weekPrompt = `Full week data:
 ${wD.map((d,i)=>{
   const day=all[d]; if(!day) return `${DAYS[i]}: no data`;
-  const lg=MEALS.filter(m=>day.meals?.[m.id]?.logged);
+  const lg=[{id:"breakfast",pro:25,cal:400},{id:"snack1",pro:15,cal:200},{id:"lunch",pro:30,cal:500},{id:"snack2",pro:15,cal:200},{id:"dinner",pro:35,cal:550}].filter(m=>day.meals?.[m.id]?.logged);
   const c=lg.reduce((a,m)=>a+m.cal,0), p=lg.reduce((a,m)=>a+m.pro,0);
   const cm=(day.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
   const prog=PROG[FDYS[i]];
   const sets=day.lift?.ex?Object.values(day.lift.ex).reduce((a,ex)=>a+(ex.sets?.filter(s=>s.done).length||0),0):0;
-  return `${DAYS[i]}: ${c}cal, ${p}g protein, ${cm}min movement${prog||day.lift?.session?`, ${sets} strength sets`:""}${day.sober===true?", SOBER":day.sober===false?", HAD DRINK":""}`;
+  const sleep=day.ci?.sleep||"?", energy=day.ci?.energy||"?", weight=day.ci?.weight||"?";
+  return `${DAYS[i]}: ${c}cal, ${p}g protein, ${cm}min movement${prog||day.lift?.session?`, ${sets} strength sets`:""}, sleep=${sleep}/5, energy=${energy}/5, weight=${weight}lbs${day.sober===true?", SOBER":day.sober===false?", HAD DRINK":""}`;
 }).join("\n")}
-All-time: ${totStr} lift sessions, ${totCard} cardio days, ${totSober} sober days, ${lost.toFixed(1)}lbs lost of 45lb goal. Current day streak: ${streak}.
-Weight: ${curW}lbs (goal ${GOAL}lbs, started ${START}lbs).
-Weekly cardio: ${ctx.weekCardio}min. Weekly strength sets: ${ctx.weekSets}. Avg daily protein: ${avgPro}g.
+
+Weekly goals set: ${thisWeekGoals ? `strength=${thisWeekGoals.strengthSessions} sessions, cardio=${thisWeekGoals.cardioMinutes}min, protein=${thisWeekGoals.proteinTarget}g/day, sober=${thisWeekGoals.soberDays} days, weight target=${thisWeekGoals.weightGoal}lbs, sleep target=${thisWeekGoals.sleepScore}/5` : "not set yet"}
+Goals achieved: strength=${progress.strengthSessions}/${thisWeekGoals?.strengthSessions||4}, cardio=${ctx.weekCardio}/${thisWeekGoals?.cardioMinutes||150}min, sober days=${ctx.soberDaysWeek||0}/${thisWeekGoals?.soberDays||7}
+All-time: ${totStr} lift sessions, ${totCard} cardio days, ${totSober} sober days, ${lost.toFixed(1)}lbs lost of 45lb goal.
+Current weight: ${curW}lbs, goal ${GOAL}lbs. VO2 max: ${ctx.watchData?.vo2||23.5}.
+
 Give a comprehensive weekly coaching review:
-1. What physiological adaptations occurred this week from her specific training and nutrition
-2. What the data pattern reveals — what's working, what recurring issue needs fixing
-3. What's changing in body composition now (even if scale is flat) — fat loss vs muscle gain timeline
-4. Her highest-leverage adjustment for next week and the mechanism why
-5. 4-week projection: VO2 max, RHR, weight, energy if she continues this trajectory`;
+1. What physiological adaptations occurred this week from specific training and nutrition
+2. Goal progress — what was achieved, what fell short and why  
+3. What's changing in body composition right now (explain even if scale is flat)
+4. One highest-leverage adjustment for next week with the mechanism why
+5. 4-week projection: VO2 max, RHR, weight, energy if trajectory continues`;
+
+  const expectPrompt = `Rebecca's current metrics for a "What to expect this week" briefing:
+Last week: ${ctx.weekSets} strength sets, ${ctx.weekCardio}min cardio, ${ctx.soberDaysWeek||0} sober days, avg sleep likely ${ctx.watchData?.hrv?"recovered":"unknown"}.
+Current weight: ${curW}lbs (goal 151lbs, lost ${lost.toFixed(1)}lbs). VO2 max: ${ctx.watchData?.vo2||23.5}.
+This week's goals: ${thisWeekGoals ? `${thisWeekGoals.strengthSessions} strength sessions, ${thisWeekGoals.cardioMinutes}min cardio, ${thisWeekGoals.soberDays} sober days, weight target ${thisWeekGoals.weightGoal}lbs` : "not set yet"}.
+Scheduled: Push Mon, Zone2 Tue, Pull Wed, Zone2 Thu, Legs+Core Fri, Full Body Sat, Rest Sun.
+Lexapro (2pm energy cliff), suppressed cycle (consistent hormones), VO2 max climbing from 19.6.
+
+Give her a "What to expect this week" briefing covering:
+1. How her body will physically feel Monday through Sunday — energy patterns, soreness timeline (when DOMS peaks after each session), adaptation windows
+2. What measurable changes to expect in HRV, resting HR, weight fluctuation (not fat loss — actual scale fluctuation from water/glycogen) 
+3. The specific physiological opportunity this week based on where she is in her fitness journey
+4. One thing that will be hard this week and how to navigate it
+Keep it specific to her data. Write as a knowledgeable coach giving a pre-week briefing.`;
+
   return (
     <div>
+      {/* WEEKLY GOALS */}
+      <WeeklyGoals allData={all} weekGoals={weekGoals} onSave={onSaveGoal}/>
+
+      {/* WHAT TO EXPECT THIS WEEK */}
+      <AIBlock
+        label="🔭 What to Expect This Week"
+        prompt={expectPrompt}
+        context={ctx}
+        addendum="Write as a knowledgeable sports scientist giving a Monday morning briefing. Be specific about the physiology — when DOMS peaks, HRV patterns, weight fluctuation mechanics. Make her feel prepared and confident for the week ahead."
+        type="info"
+        color={T.blu}
+      />
+
       <Card bg={T.gBg} bdr={T.gBdr}>
         <SLabel>Weight Journey · 196 → 151 lbs</SLabel>
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
@@ -908,7 +946,7 @@ Give a comprehensive weekly coaching review:
         </div>
       </Card>
       <AIBlock
-        label="🔬 Weekly Analysis + Projection"
+        label="📊 Weekly Performance Review"
         prompt={weekPrompt}
         context={ctx}
         addendum="Comprehensive weekly physiology review. What adaptations occurred. Connect sobriety to fitness. Give 4-week biological projection."
@@ -921,6 +959,9 @@ Give a comprehensive weekly coaching review:
 }
 export default function App() {
   const [all, setAll] = useState(() => ld());
+  const [weekGoals, setWeekGoals] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("fnd_weekgoals_v1")||"{}"); } catch { return {}; }
+  });
   const [tab, setTab] = useState("today");
   const today = tod();
   const dayData = (() => { const c={...all}; return initDay(c, today); })();
@@ -938,6 +979,12 @@ export default function App() {
   const lg = MEALS.filter(m=>meals[m.id]?.logged);
   const cal = lg.reduce((a,m)=>a+m.cal,0), pro = lg.reduce((a,m)=>a+m.pro,0);
   const min = (dayData.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
+  function saveWeekGoal(monday, goals) {
+    const updated = { ...weekGoals, [monday]: goals };
+    setWeekGoals(updated);
+    try { localStorage.setItem("fnd_weekgoals_v1", JSON.stringify(updated)); } catch {}
+  }
+
   const TABS = [
     {id:"today", label:"Today",  icon:"☀️"},
     {id:"lift",  label:"Lift",   icon:"💪"},
@@ -993,7 +1040,7 @@ export default function App() {
         {tab==="move"  && <MoveTab  day={dayData} upd={upd} ctx={ctx}/>}
         {tab==="fuel"  && <FuelTab  day={dayData} upd={upd} ctx={ctx}/>}
         {tab==="sober" && <SoberTab all={all} upd={upd} day={dayData} ctx={ctx}/>}
-        {tab==="week"  && <WeekTab  all={all} ctx={ctx}/>}
+        {tab==="week"  && <WeekTab  all={all} ctx={ctx} weekGoals={weekGoals} onSaveGoal={saveWeekGoal}/>}
       </div>
     </div>
   );
