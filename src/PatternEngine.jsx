@@ -189,6 +189,7 @@ export default function PatternEngine({ dayData, allData }) {
   const [insight, setInsight] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const dismissedAtRef = useRef(null);
   const [lastTriggerKey, setLastTriggerKey] = useState(null);
   const debounceRef = useRef(null);
   const cooldownRef = useRef(null);
@@ -215,11 +216,12 @@ export default function PatternEngine({ dayData, allData }) {
       // Don't re-fire same trigger within 10 minutes
       if (trigger.id === lastTriggerKey && cooldownRef.current && Date.now() - cooldownRef.current < 600000) return;
       // Don't fire if dismissed in last 5 minutes
-      if (dismissed && Date.now() - dismissed < 300000) return;
+      if (dismissedAtRef.current && Date.now() - dismissedAtRef.current < 300000) return;
 
       setLastTriggerKey(trigger.id);
       cooldownRef.current = Date.now();
       setDismissed(false);
+      dismissedAtRef.current = null;
       setLoading(true);
       const msg = await getPatternInsight(trigger.prompt);
       if (msg) setInsight({ msg, id: trigger.id, ts: Date.now() });
@@ -228,7 +230,7 @@ export default function PatternEngine({ dayData, allData }) {
     return () => clearTimeout(debounceRef.current);
   }, [dataKey]);
 
-  if (!insight && !loading) return null;
+  if (dismissed || (!insight && !loading)) return null;
 
   const typeColors = {
     snack_skip_afternoon: { bg:T.rdBg, bdr:T.rdBdr, l:T.red },
@@ -261,7 +263,7 @@ export default function PatternEngine({ dayData, allData }) {
             {loading ? "⏳ Analyzing pattern..." : "🧠 Pattern Recognized"}
           </span>
           {!loading && (
-            <button onClick={()=>setDismissed(Date.now())} style={{ background:"none", border:"none", color:T.fnt, fontSize:18, cursor:"pointer", padding:"0 4px", lineHeight:1 }}>×</button>
+            <button onClick={()=>{ setDismissed(true); dismissedAtRef.current = Date.now(); setInsight(null); }} style={{ background:"none", border:"none", color:T.fnt, fontSize:20, cursor:"pointer", padding:"4px 8px", lineHeight:1, minWidth:32, textAlign:"center" }}>×</button>
           )}
         </div>
         {!loading && insight && (
