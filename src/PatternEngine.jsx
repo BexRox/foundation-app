@@ -185,7 +185,7 @@ function detectPatterns(dayData, allData, prevInsight) {
   if (hour >= 5 && hour < 9 && cardioMin === 0 && liftSets === 0) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const ydStr = yesterday.toISOString().split("T")[0];
+    const ydStr = (yesterday.getFullYear()+"-"+String(yesterday.getMonth()+1).padStart(2,"0")+"-"+String(yesterday.getDate()).padStart(2,"0"));
     const ydData = allData[ydStr] || {};
     const ydSets = Object.values(ydData.lift?.ex||{}).reduce((a,ex) => a+(ex.sets?.filter(s=>s.done).length||0), 0);
     const ydCardio = (ydData.cardio||[]).reduce((a,e) => a+parseInt(e.dur||0), 0);

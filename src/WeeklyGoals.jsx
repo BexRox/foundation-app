@@ -17,7 +17,7 @@ function getMondayKey() {
   const dow = now.getDay();
   const mon = new Date(now);
   mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
-  return mon.toISOString().split("T")[0];
+  return (mon.getFullYear()+"-"+String(mon.getMonth()+1).padStart(2,"0")+"-"+String(mon.getDate()).padStart(2,"0"));
 }
 
 // Calculate smart defaults from history
@@ -69,7 +69,7 @@ export default function WeeklyGoals({ allData, weekGoals, onSave }) {
   const now = new Date();
   const dow = now.getDay();
   const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
-  const weekDates = Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d.toISOString().split("T")[0]; });
+  const weekDates = Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return (d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")); });
 
   const progress = {
     strengthSessions: weekDates.filter(d => allData[d]?.lift?.ex && Object.values(allData[d].lift.ex).some(ex => ex.sets?.some(s=>s.done))).length,

@@ -100,7 +100,10 @@ const MOVES = [
   {id:"stairs",  label:"Stair Stepper",   icon:"🪜"},
   {id:"other",   label:"Other",           icon:"✨"},
 ];
-const tod = () => new Date().toISOString().split("T")[0];
+const tod = () => {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+};
 const dn  = (ds) => { const d = ds ? new Date(ds+"T12:00:00") : new Date(); return d.toLocaleDateString("en-US",{weekday:"long"}); };
 const ld  = () => { try { return JSON.parse(localStorage.getItem(KEY)||"{}"); } catch { return {}; } };
 const sd  = d  => { try { localStorage.setItem(KEY,JSON.stringify(d)); } catch {} };
@@ -132,7 +135,7 @@ function buildContext(all) {
   const now = new Date();
   const dow = now.getDay();
   const mon = new Date(now); mon.setDate(now.getDate() - (dow===0?6:dow-1));
-  const weekDates = Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d.toISOString().split("T")[0]; });
+  const weekDates = Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return (d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")); });
   const weekSets   = weekDates.reduce((a,d) => a+Object.values(all[d]?.lift?.ex||{}).reduce((b,ex)=>b+(ex.sets?.filter(s=>s.done).length||0),0), 0);
   const weekCardio = weekDates.reduce((a,d) => a+(all[d]?.cardio||[]).reduce((b,e)=>b+parseInt(e.dur||0),0), 0);
   const soberDaysWeek = weekDates.filter(d => all[d]?.sober===true).length;
@@ -795,7 +798,7 @@ ${day.sober===false?"5. After logging a drink: what specifically happens in the 
 function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   const now=new Date(), dow=now.getDay();
   const mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1));
-  const wD=Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d.toISOString().split("T")[0]; });
+  const wD=Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return (d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")); });
   const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const FDYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
   const DAY_PLAN={
@@ -822,13 +825,13 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   let streak=0;
   const cd=new Date();
   for(let i=0;i<60;i++){
-    const ds=cd.toISOString().split("T")[0],d=all[ds];
+    const ds=(cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0")),d=all[ds];
     if(d&&((d.cardio?.length>0)||(d.lift?.ex&&Object.values(d.lift.ex).some(ex=>ex.sets?.some(s=>s.done))))) streak++;
     else if(i>0) break;
     cd.setDate(cd.getDate()-1);
   }
   // Get current week's goals
-  const mondayKey = (()=>{ const now=new Date(),dow=now.getDay(),mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1)); return mon.toISOString().split("T")[0]; })();
+  const mondayKey = (()=>{ const now=new Date(),dow=now.getDay(),mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1)); return (mon.getFullYear()+"-"+String(mon.getMonth()+1).padStart(2,"0")+"-"+String(mon.getDate()).padStart(2,"0")); })();
   const thisWeekGoals = weekGoals?.[mondayKey];
 
   // Build week summary without nested template literals
