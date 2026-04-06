@@ -71,22 +71,6 @@ function MacroBar({ label, value, max, color, bg }) {
       <div style={{ height:8, background:bg||T.bdr, borderRadius:4, overflow:"hidden" }}>
         <div style={{ height:"100%", width:`${Math.min(value/max*100,100)}%`, background:color, borderRadius:4, transition:"width 0.5s" }}/>
       </div>
-      {/* Favorites panel */}
-      {showFavorites && openSlot && (
-        <FavoritesPanel
-          onSelectFavorite={applyFavorite}
-          onClose={() => { setShowFavorites(false); setOpenSlot(null); }}
-        />
-      )}
-
-      {/* Save favorite modal */}
-      {saveFavSlot && (
-        <SaveFavoriteModal
-          items={saveFavSlot.items}
-          slotLabel={saveFavSlot.slotLabel}
-          onClose={() => setSaveFavSlot(null)}
-        />
-      )}
     </div>
   );
 }
@@ -415,6 +399,23 @@ export default function FuelTab({ day, upd, ctx }) {
           slotLabel={MEAL_SLOTS.find(s => s.id === openSlot)?.label || ""}
           onAdd={(food) => addFoodToSlot(openSlot, food)}
           onClose={() => setOpenSlot(null)}
+        />
+      )}
+
+      {/* Favorites panel */}
+      {showFavorites && openSlot && (
+        <FavoritesPanel
+          onSelectFavorite={applyFavorite}
+          onClose={() => { setShowFavorites(false); setOpenSlot(null); }}
+        />
+      )}
+
+      {/* Save favorite modal */}
+      {saveFavSlot && (
+        <SaveFavoriteModal
+          items={saveFavSlot.items}
+          slotLabel={saveFavSlot.slotLabel}
+          onClose={() => setSaveFavSlot(null)}
         />
       )}
     </div>

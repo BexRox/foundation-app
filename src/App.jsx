@@ -844,7 +844,7 @@ ${wD.map((d,i)=>{
 }).join("\n")}
 
 Weekly goals set: ${thisWeekGoals ? `strength=${thisWeekGoals.strengthSessions} sessions, cardio=${thisWeekGoals.cardioMinutes}min, protein=${thisWeekGoals.proteinTarget}g/day, sober=${thisWeekGoals.soberDays} days, weight target=${thisWeekGoals.weightGoal}lbs, sleep target=${thisWeekGoals.sleepScore}/5` : "not set yet"}
-Goals achieved: strength=${progress.strengthSessions}/${thisWeekGoals?.strengthSessions||4}, cardio=${ctx.weekCardio}/${thisWeekGoals?.cardioMinutes||150}min, sober days=${ctx.soberDaysWeek||0}/${thisWeekGoals?.soberDays||7}
+Goals achieved: strength=${wD.filter(d=>all[d]?.lift?.ex&&Object.values(all[d].lift.ex).some(ex=>ex.sets?.some(s=>s.done))).length}/${thisWeekGoals?.strengthSessions||4} sessions, cardio=${ctx.weekCardio}/${thisWeekGoals?.cardioMinutes||150}min, sober days=${ctx.soberDaysWeek||0}/${thisWeekGoals?.soberDays||7}
 All-time: ${totStr} lift sessions, ${totCard} cardio days, ${totSober} sober days, ${lost.toFixed(1)}lbs lost of 45lb goal.
 Current weight: ${curW}lbs, goal ${GOAL}lbs. VO2 max: ${ctx.watchData?.vo2||23.5}.
 
