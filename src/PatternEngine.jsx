@@ -180,6 +180,55 @@ function detectPatterns(dayData, allData, prevInsight) {
     });
   }
 
+  // MORNING MOVEMENT RECOMMENDATION
+  // Fires early morning - recommends walk vs Pilates based on yesterday's training
+  if (hour >= 5 && hour < 9 && cardioMin === 0 && liftSets === 0) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const ydStr = yesterday.toISOString().split("T")[0];
+    const ydData = allData[ydStr] || {};
+    const ydSets = Object.values(ydData.lift?.ex||{}).reduce((a,ex) => a+(ex.sets?.filter(s=>s.done).length||0), 0);
+    const ydCardio = (ydData.cardio||[]).reduce((a,e) => a+parseInt(e.dur||0), 0);
+    const ydSession = ydData.lift?.session;
+    const wasHeavyYesterday = ydSets >= 12; // full or near-full session
+    const wasLegsYesterday  = ydSession === "Friday" || (ydData.lift?.session && allData[ydStr]?.lift?.session === "Friday");
+
+    // Check actual session type from stored session key
+    const ydDayName = yesterday.toLocaleDateString("en-US",{weekday:"long"});
+    const ydProg = { Monday:"PUSH", Wednesday:"PULL", Friday:"LEGS+CORE", Saturday:"FULL BODY" }[ydDayName];
+    const isLegsSession = ydProg === "LEGS+CORE" || ydProg === "FULL BODY";
+
+    if (wasHeavyYesterday && isLegsSession) {
+      // Legs/Full Body yesterday = hip flexors, glutes, hamstrings will be stiff → Pilates
+      triggers.push({
+        id: "morning_post_legs_pilates",
+        priority: 8,
+        prompt: `It's ${hour}:00 and Rebecca hasn't logged any movement yet. Yesterday she did ${ydSets} strength sets (${ydProg} session — legs and glutes). Her hip flexors, glutes, and hamstrings will be in early-stage DOMS right now. Tell her specifically: (1) why Pilates or yoga is the better morning choice TODAY over walking — the specific recovery mechanism, not generic advice, and (2) what 15 minutes of morning Pilates does to DOMS recovery compared to walking on sore legs. Be direct about the physiology.`,
+      });
+    } else if (wasHeavyYesterday) {
+      // Heavy upper body yesterday = still walk, but note soreness
+      triggers.push({
+        id: "morning_post_upper_walk",
+        priority: 7,
+        prompt: `It's ${hour}:00 and Rebecca hasn't logged movement yet. Yesterday she completed ${ydSets} sets (${ydProg||"strength"} session). Her upper body will have some DOMS but her legs are fresh. Tell her: walking is the right call this morning because her lower body is recovered and ready for Zone 2 fat oxidation — the DOMS in her upper body won't be worsened by walking. Give her the specific VO2 max math: at 23.5 climbing to 28+, every morning walk is compounding at a rate that matters right now.`,
+      });
+    } else if (ydSets === 0 && ydCardio === 0) {
+      // Rest day yesterday - fresh, walk is high priority
+      triggers.push({
+        id: "morning_fresh_walk",
+        priority: 6,
+        prompt: `It's ${hour}:00 and Rebecca has logged no movement yet today. Yesterday was a rest day — she's fully recovered. Tell her: this is the highest-value morning walk window of her week. Fresh legs, morning fasted state, cortisol curve just starting — the fat oxidation and VO2 max benefits of a 15-20 minute walk right now are at their peak. Give her the specific mechanism: fasted Zone 2 preferentially oxidizes fat and the cardiovascular adaptation signal is strongest when glycogen is partially depleted.`,
+      });
+    } else {
+      // Default morning nudge - walk recommendation
+      triggers.push({
+        id: "morning_walk_nudge",
+        priority: 5,
+        prompt: `It's ${hour}:00 and Rebecca hasn't moved yet today. Yesterday: ${ydSets > 0 ? ydSets+" strength sets" : "no lifting"}, ${ydCardio > 0 ? ydCardio+"min cardio" : "no cardio"}. Recommend walk vs Pilates for this morning based on her recovery state. VO2 max is 23.5 climbing to 28+ — every Zone 2 minute right now compounds disproportionately because she's on the steep part of the adaptation curve. Be specific about why the choice matters this particular morning.`,
+      });
+    }
+  }
+
   // Sort by priority and return highest
   triggers.sort((a,b) => b.priority - a.priority);
   return triggers[0] || null;
