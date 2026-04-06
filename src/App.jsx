@@ -792,7 +792,7 @@ ${day.sober===false?"5. After logging a drink: what specifically happens in the 
     </div>
   );
 }
-function WeekTab({ all, ctx }) {
+function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   const now=new Date(), dow=now.getDay();
   const mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1));
   const wD=Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d.toISOString().split("T")[0]; });
@@ -831,43 +831,29 @@ function WeekTab({ all, ctx }) {
   const mondayKey = (()=>{ const now=new Date(),dow=now.getDay(),mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1)); return mon.toISOString().split("T")[0]; })();
   const thisWeekGoals = weekGoals?.[mondayKey];
 
-  const weekPrompt = `Full week data:
-${wD.map((d,i)=>{
-  const day=all[d]; if(!day) return `${DAYS[i]}: no data`;
-  const lg=[{id:"breakfast",pro:25,cal:400},{id:"snack1",pro:15,cal:200},{id:"lunch",pro:30,cal:500},{id:"snack2",pro:15,cal:200},{id:"dinner",pro:35,cal:550}].filter(m=>day.meals?.[m.id]?.logged);
-  const c=lg.reduce((a,m)=>a+m.cal,0), p=lg.reduce((a,m)=>a+m.pro,0);
-  const cm=(day.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
-  const prog=PROG[FDYS[i]];
-  const sets=day.lift?.ex?Object.values(day.lift.ex).reduce((a,ex)=>a+(ex.sets?.filter(s=>s.done).length||0),0):0;
-  const sleep=day.ci?.sleep||"?", energy=day.ci?.energy||"?", weight=day.ci?.weight||"?";
-  return `${DAYS[i]}: ${c}cal, ${p}g protein, ${cm}min movement${prog||day.lift?.session?`, ${sets} strength sets`:""}, sleep=${sleep}/5, energy=${energy}/5, weight=${weight}lbs${day.sober===true?", SOBER":day.sober===false?", HAD DRINK":""}`;
-}).join("\n")}
+  // Build week summary without nested template literals
+  const weekDaySummary = wD.map((d,i)=>{
+    const day=all[d];
+    if(!day) return DAYS[i]+": no data";
+    const lg=[{id:"breakfast",pro:25,cal:400},{id:"snack1",pro:15,cal:200},{id:"lunch",pro:30,cal:500},{id:"snack2",pro:15,cal:200},{id:"dinner",pro:35,cal:550}].filter(m=>day.meals?.[m.id]?.logged);
+    const c=lg.reduce((a,m)=>a+m.cal,0), p=lg.reduce((a,m)=>a+m.pro,0);
+    const cm=(day.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
+    const prog=PROG[FDYS[i]];
+    const sets=day.lift?.ex?Object.values(day.lift.ex).reduce((a,ex)=>a+(ex.sets?.filter(s=>s.done).length||0),0):0;
+    const sleep=day.ci?.sleep||"?", energy=day.ci?.energy||"?", weight=day.ci?.weight||"?";
+    const soberTag=day.sober===true?", SOBER":day.sober===false?", HAD DRINK":"";
+    const liftTag=(prog||day.lift?.session)?", "+sets+" strength sets":"";
+    return DAYS[i]+": "+c+"cal, "+p+"g protein, "+cm+"min movement"+liftTag+", sleep="+sleep+"/5, energy="+energy+"/5, weight="+weight+"lbs"+soberTag;
+  }).join("\n");
 
-Weekly goals set: ${thisWeekGoals ? `strength=${thisWeekGoals.strengthSessions} sessions, cardio=${thisWeekGoals.cardioMinutes}min, protein=${thisWeekGoals.proteinTarget}g/day, sober=${thisWeekGoals.soberDays} days, weight target=${thisWeekGoals.weightGoal}lbs, sleep target=${thisWeekGoals.sleepScore}/5` : "not set yet"}
-Goals achieved: strength=${wD.filter(d=>all[d]?.lift?.ex&&Object.values(all[d].lift.ex).some(ex=>ex.sets?.some(s=>s.done))).length}/${thisWeekGoals?.strengthSessions||4} sessions, cardio=${ctx.weekCardio}/${thisWeekGoals?.cardioMinutes||150}min, sober days=${ctx.soberDaysWeek||0}/${thisWeekGoals?.soberDays||7}
-All-time: ${totStr} lift sessions, ${totCard} cardio days, ${totSober} sober days, ${lost.toFixed(1)}lbs lost of 45lb goal.
-Current weight: ${curW}lbs, goal ${GOAL}lbs. VO2 max: ${ctx.watchData?.vo2||23.5}.
+  const goalsStr = thisWeekGoals
+    ? "strength="+thisWeekGoals.strengthSessions+" sessions, cardio="+thisWeekGoals.cardioMinutes+"min, protein="+thisWeekGoals.proteinTarget+"g/day, sober="+thisWeekGoals.soberDays+" days, weight target="+thisWeekGoals.weightGoal+"lbs"
+    : "not set yet";
+  const goalsAchieved = "strength="+wD.filter(d=>all[d]?.lift?.ex&&Object.values(all[d].lift.ex).some(ex=>ex.sets?.some(s=>s.done))).length+"/"+(thisWeekGoals?.strengthSessions||4)+" sessions, cardio="+ctx.weekCardio+"/"+(thisWeekGoals?.cardioMinutes||150)+"min, sober days="+(ctx.soberDaysWeek||0)+"/"+(thisWeekGoals?.soberDays||7);
 
-Give a comprehensive weekly coaching review:
-1. What physiological adaptations occurred this week from specific training and nutrition
-2. Goal progress — what was achieved, what fell short and why  
-3. What's changing in body composition right now (explain even if scale is flat)
-4. One highest-leverage adjustment for next week with the mechanism why
-5. 4-week projection: VO2 max, RHR, weight, energy if trajectory continues`;
+  const weekPrompt = "Full week data:\n"+weekDaySummary+"\n\nWeekly goals set: "+goalsStr+"\nGoals achieved: "+goalsAchieved+"\nAll-time: "+totStr+" lift sessions, "+totCard+" cardio days, "+totSober+" sober days, "+lost.toFixed(1)+"lbs lost of 45lb goal.\nCurrent weight: "+curW+"lbs, goal "+GOAL+"lbs. VO2 max: "+(ctx.watchData?.vo2||23.5)+".\n\nGive a comprehensive weekly coaching review:\n1. What physiological adaptations occurred this week from specific training and nutrition\n2. Goal progress — what was achieved, what fell short and why\n3. What's changing in body composition now (even if scale is flat)\n4. Highest-leverage adjustment for next week and the mechanism why\n5. 4-week projection: VO2 max, RHR, weight, energy if trajectory continues";
 
-  const expectPrompt = `Rebecca's current metrics for a "What to expect this week" briefing:
-Last week: ${ctx.weekSets} strength sets, ${ctx.weekCardio}min cardio, ${ctx.soberDaysWeek||0} sober days, avg sleep likely ${ctx.watchData?.hrv?"recovered":"unknown"}.
-Current weight: ${curW}lbs (goal 151lbs, lost ${lost.toFixed(1)}lbs). VO2 max: ${ctx.watchData?.vo2||23.5}.
-This week's goals: ${thisWeekGoals ? `${thisWeekGoals.strengthSessions} strength sessions, ${thisWeekGoals.cardioMinutes}min cardio, ${thisWeekGoals.soberDays} sober days, weight target ${thisWeekGoals.weightGoal}lbs` : "not set yet"}.
-Scheduled: Push Mon, Zone2 Tue, Pull Wed, Zone2 Thu, Legs+Core Fri, Full Body Sat, Rest Sun.
-Lexapro (2pm energy cliff), suppressed cycle (consistent hormones), VO2 max climbing from 19.6.
-
-Give her a "What to expect this week" briefing covering:
-1. How her body will physically feel Monday through Sunday — energy patterns, soreness timeline (when DOMS peaks after each session), adaptation windows
-2. What measurable changes to expect in HRV, resting HR, weight fluctuation (not fat loss — actual scale fluctuation from water/glycogen) 
-3. The specific physiological opportunity this week based on where she is in her fitness journey
-4. One thing that will be hard this week and how to navigate it
-Keep it specific to her data. Write as a knowledgeable coach giving a pre-week briefing.`;
+  const expectPrompt = "Rebecca's metrics for a 'What to expect this week' briefing:\nLast week: "+ctx.weekSets+" strength sets, "+ctx.weekCardio+"min cardio, "+(ctx.soberDaysWeek||0)+" sober days.\nCurrent weight: "+curW+"lbs (goal 151lbs, lost "+lost.toFixed(1)+"lbs). VO2 max: "+(ctx.watchData?.vo2||23.5)+".\nThis week's goals: "+goalsStr+".\nScheduled: Push Mon, Zone2 Tue, Pull Wed, Zone2 Thu, Legs+Core Fri, Full Body Sat, Rest Sun.\nLexapro (2pm energy cliff), suppressed cycle (consistent hormones).\n\nGive a 'What to expect this week' briefing:\n1. How her body will feel Mon-Sun — energy patterns, soreness timeline, adaptation windows\n2. Measurable changes to expect in HRV, RHR, weight fluctuation mechanics\n3. The specific physiological opportunity this week\n4. One thing that will be hard and how to navigate it"
 
   return (
     <div>
