@@ -824,10 +824,13 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   const curW=ws.length>0?ws[ws.length-1]:START, lost=START-curW;
   let streak=0;
   const cd=new Date();
+  const todayStr=(cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0"));
   for(let i=0;i<60;i++){
     const ds=(cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0")),d=all[ds];
-    if(d&&((d.cardio?.length>0)||(d.lift?.ex&&Object.values(d.lift.ex).some(ex=>ex.sets?.some(s=>s.done))))) streak++;
-    else if(i>0) break;
+    const hasActivity=d&&((d.cardio?.length>0)||(d.lift?.ex&&Object.values(d.lift.ex).some(ex=>ex.sets?.some(s=>s.done))));
+    if(hasActivity) streak++;
+    else if(ds===todayStr) { cd.setDate(cd.getDate()-1); continue; } // skip today if nothing yet
+    else break;
     cd.setDate(cd.getDate()-1);
   }
   // Get current week's goals
@@ -948,7 +951,18 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   );
 }
 export default function App() {
-  const [all, setAll] = useState(() => ld());
+  const [all, setAll] = useState(() => {
+    const data = ld();
+    const todayKey = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+    const lastOpened = localStorage.getItem('fnd_last_opened');
+    // If last opened on a different day, ensure today starts fresh (don't delete - just init)
+    if(lastOpened && lastOpened !== todayKey) {
+      // Today's data may have leaked from yesterday via UTC bug - reset it
+      delete data[todayKey];
+    }
+    localStorage.setItem('fnd_last_opened', todayKey);
+    return data;
+  });
   const [weekGoals, setWeekGoals] = useState(() => {
     try { return JSON.parse(localStorage.getItem("fnd_weekgoals_v1")||"{}"); } catch { return {}; }
   });
@@ -966,8 +980,16 @@ export default function App() {
   }
   const prog = PROG[dn()];
   const meals = dayData.meals||{};
-  const lg = MEALS.filter(m=>meals[m.id]?.logged);
-  const cal = lg.reduce((a,m)=>a+m.cal,0), pro = lg.reduce((a,m)=>a+m.pro,0);
+  // Support both new (items[]) and legacy (logged:true) meal formats
+  const headerCal = Object.values(meals).reduce((a,slot)=>{
+    if(slot?.items?.length>0) return a+slot.items.reduce((b,item)=>b+(item.nutrients?.cal||0),0);
+    return a;
+  },0);
+  const headerPro = Object.values(meals).reduce((a,slot)=>{
+    if(slot?.items?.length>0) return a+slot.items.reduce((b,item)=>b+(item.nutrients?.pro||0),0);
+    return a;
+  },0);
+  const cal = headerCal, pro = headerPro;
   const min = (dayData.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
   function saveWeekGoal(monday, goals) {
     const updated = { ...weekGoals, [monday]: goals };
