@@ -822,15 +822,23 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   const totSober=allD.filter(d=>all[d]?.sober===true).length;
   const ws=allD.map(d=>parseFloat(all[d]?.ci?.weight)).filter(Boolean);
   const curW=ws.length>0?ws[ws.length-1]:START, lost=START-curW;
+  const _sd=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const _today=new Date();
+  const todayStr=_sd(_today);
   let streak=0;
   const cd=new Date();
-  const todayStr=(cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0"));
   for(let i=0;i<60;i++){
-    const ds=(cd.getFullYear()+"-"+String(cd.getMonth()+1).padStart(2,"0")+"-"+String(cd.getDate()).padStart(2,"0")),d=all[ds];
+    const ds=_sd(cd), d=all[ds];
     const hasActivity=d&&((d.cardio?.length>0)||(d.lift?.ex&&Object.values(d.lift.ex).some(ex=>ex.sets?.some(s=>s.done))));
-    if(hasActivity) streak++;
-    else if(ds===todayStr) { cd.setDate(cd.getDate()-1); continue; } // skip today if nothing yet
-    else break;
+    if(hasActivity){
+      streak++;
+    } else if(ds===todayStr){
+      // Today with no activity yet — don't count but don't break (streak intact from yesterday)
+      cd.setDate(cd.getDate()-1);
+      continue;
+    } else {
+      break;
+    }
     cd.setDate(cd.getDate()-1);
   }
   // Get current week's goals
