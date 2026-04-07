@@ -961,14 +961,36 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
 export default function App() {
   const [all, setAll] = useState(() => {
     const data = ld();
-    const todayKey = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+    // Build today's key using LOCAL date (not UTC)
+    const nd = new Date();
+    const todayKey = nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+    
+    // Check if today's stored data was actually created today
+    // by comparing its _date stamp to todayKey
+    if (data[todayKey] && data[todayKey]._date && data[todayKey]._date !== todayKey) {
+      // Data stored under today's key is from a different day — wipe it
+      delete data[todayKey];
+    }
+    
+    // Also wipe today if lastOpened was a different date (day rollover)
     const lastOpened = localStorage.getItem('fnd_last_opened');
-    // If last opened on a different day, ensure today starts fresh (don't delete - just init)
-    if(lastOpened && lastOpened !== todayKey) {
-      // Today's data may have leaked from yesterday via UTC bug - reset it
+    if (lastOpened && lastOpened !== todayKey) {
       delete data[todayKey];
     }
     localStorage.setItem('fnd_last_opened', todayKey);
+    
+    // Scan all days: if a day's _date doesn't match its key, fix it
+    for (const key of Object.keys(data)) {
+      if (data[key]._date && data[key]._date !== key) {
+        // This day's data was saved under wrong key — move it to correct key
+        const correctKey = data[key]._date;
+        if (!data[correctKey]) data[correctKey] = data[key];
+        delete data[key];
+      }
+    }
+
+    // Save cleaned data back
+    try { localStorage.setItem('fnd_v5', JSON.stringify(data)); } catch {}
     return data;
   });
   const [weekGoals, setWeekGoals] = useState(() => {
@@ -981,8 +1003,8 @@ export default function App() {
   function upd(field, value) {
     setAll(prev => {
       const u = {...prev};
-      if (!u[today]) u[today] = { ci:{}, meals:{}, cardio:[], lift:{ex:{},session:null}, watch:{}, sober:null, notes:"" };
-      u[today] = {...u[today], [field]:value};
+      if (!u[today]) u[today] = { ci:{}, meals:{}, cardio:[], lift:{ex:{},session:null}, watch:{}, sober:null, notes:"", _date:today };
+      u[today] = {...u[today], [field]:value, _date:today};
       sd(u); return u;
     });
   }
