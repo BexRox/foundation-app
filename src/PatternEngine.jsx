@@ -60,11 +60,11 @@ function detectPatterns(dayData, allData, prevInsight) {
     }
   }
 
-  const hasBreakfast = meals.breakfast?.logged || (meals.breakfast?.items||[]).length > 0;
-  const hasSnack1    = meals.snack1?.logged    || (meals.snack1?.items||[]).length > 0;
-  const hasLunch     = meals.lunch?.logged     || (meals.lunch?.items||[]).length > 0;
-  const hasSnack2    = meals.snack2?.logged    || (meals.snack2?.items||[]).length > 0;
-  const hasDinner    = meals.dinner?.logged    || (meals.dinner?.items||[]).length > 0;
+  const hasBreakfast = (meals.breakfast?.items||[]).length > 0;
+  const hasSnack1    = (meals.snack1?.items||[]).length > 0;
+  const hasLunch     = (meals.lunch?.items||[]).length > 0;
+  const hasSnack2    = (meals.snack2?.items||[]).length > 0;
+  const hasDinner    = (meals.dinner?.items||[]).length > 0;
 
   const cardioMin = cardio.reduce((a,e) => a+parseInt(e.dur||0), 0);
   const liftSets  = Object.values(lift.ex||{}).reduce((a,ex) => a+(ex.sets?.filter(s=>s.done).length||0), 0);

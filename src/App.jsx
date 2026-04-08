@@ -116,10 +116,20 @@ function buildContext(all) {
   const day = all[today] || {};
   const ci = day.ci || {};
   const meals = day.meals || {};
-  const loggedMeals = MEALS.filter(m => meals[m.id]?.logged);
-  const cal  = loggedMeals.reduce((a,m) => a+m.cal, 0);
-  const pro  = loggedMeals.reduce((a,m) => a+m.pro, 0);
-  const fib  = loggedMeals.reduce((a,m) => a+m.fib, 0);
+  // Support new items[] format and legacy logged:true format
+  const cal = Object.values(meals).reduce((a,slot) => {
+    if (slot?.items?.length > 0) return a + slot.items.reduce((b,item) => b+(item.nutrients?.cal||0), 0);
+    return a; // legacy format no longer counted — items[] is source of truth
+  }, 0);
+  const pro = Object.values(meals).reduce((a,slot) => {
+    if (slot?.items?.length > 0) return a + slot.items.reduce((b,item) => b+(item.nutrients?.pro||0), 0);
+    return a;
+  }, 0);
+  const fib = Object.values(meals).reduce((a,slot) => {
+    if (slot?.items?.length > 0) return a + slot.items.reduce((b,item) => b+(item.nutrients?.fib||0), 0);
+    return a;
+  }, 0);
+  const loggedMeals = MEALS.filter(m => (meals[m.id]?.items||[]).length > 0);
   const cardioMin = (day.cardio||[]).reduce((a,e) => a+parseInt(e.dur||0), 0);
   const liftSets  = Object.values(day.lift?.ex||{}).reduce((a,ex) => a+(ex.sets?.filter(s=>s.done).length||0), 0);
   const watchData = day.watch || {};
@@ -171,8 +181,11 @@ function buildContext(all) {
     watchData,
     liftHistory,
     notes: day.notes || "",
-    mealsLogged: loggedMeals.map(m => meals[m.id]?.note ? `${m.label}(${meals[m.id].note})` : m.label).join(", ") || "none",
-    snacksSkipped: !meals.snack1?.logged && !meals.snack2?.logged && loggedMeals.length >= 2,
+    mealsLogged: MEALS.filter(m=>(meals[m.id]?.items||[]).length>0).map(m=>{
+      const items=(meals[m.id]?.items||[]).map(i=>i.qty+" "+i.unit+" "+i.name).join(", ");
+      return m.label+"("+items+")";
+    }).join("; ") || "none",
+    snacksSkipped: (meals.snack1?.items||[]).length===0 && (meals.snack2?.items||[]).length===0 && ((meals.breakfast?.items||[]).length>0 || (meals.lunch?.items||[]).length>0),
     scheduledSession: PROG[dn()]?.label || "none",
     chosenSession: day.lift?.session ? (PROG[day.lift.session]?.label || "none") : "none",
   };
@@ -286,8 +299,9 @@ function Tabs({ tabs, active, onChange }) {
 function TodayTab({ day, upd, ctx }) {
   const ci = day.ci || {};
   const prog = PROG[dn()];
-  const lg = MEALS.filter(m => (day.meals||{})[m.id]?.logged);
-  const cal = lg.reduce((a,m)=>a+m.cal,0), pro = lg.reduce((a,m)=>a+m.pro,0);
+  const _dm = day.meals||{};
+  const cal = Object.values(_dm).reduce((a,s)=>a+(s?.items?.length>0?s.items.reduce((b,i)=>b+(i.nutrients?.cal||0),0):0),0);
+  const pro = Object.values(_dm).reduce((a,s)=>a+(s?.items?.length>0?s.items.reduce((b,i)=>b+(i.nutrients?.pro||0),0):0),0);
   const min = (day.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
   const sets = Object.values(day.lift?.ex||{}).reduce((a,ex)=>a+(ex.sets?.filter(s=>s.done).length||0),0);
   const EE=["💀","😴","😐","⚡","🔥"], SE=["💩","😞","😐","😊","🌟"];
@@ -812,8 +826,9 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   };
   let wCal=0,wPro=0;
   wD.forEach(d=>{ const day=all[d]; if(!day) return;
-    const lg=MEALS.filter(m=>day.meals?.[m.id]?.logged);
-    wCal+=lg.reduce((a,m)=>a+m.cal,0); wPro+=lg.reduce((a,m)=>a+m.pro,0);
+    const dm=day.meals||{};
+    wCal+=Object.values(dm).reduce((a,s)=>a+(s?.items?.length>0?s.items.reduce((b,i)=>b+(i.nutrients?.cal||0),0):0),0);
+    wPro+=Object.values(dm).reduce((a,s)=>a+(s?.items?.length>0?s.items.reduce((b,i)=>b+(i.nutrients?.pro||0),0):0),0);
   });
   const act=wD.filter(d=>all[d]).length, avgPro=act>0?Math.round(wPro/act):0;
   const allD=Object.keys(all).sort();
@@ -849,8 +864,9 @@ function WeekTab({ all, ctx, weekGoals, onSaveGoal }) {
   const weekDaySummary = wD.map((d,i)=>{
     const day=all[d];
     if(!day) return DAYS[i]+": no data";
-    const lg=[{id:"breakfast",pro:25,cal:400},{id:"snack1",pro:15,cal:200},{id:"lunch",pro:30,cal:500},{id:"snack2",pro:15,cal:200},{id:"dinner",pro:35,cal:550}].filter(m=>day.meals?.[m.id]?.logged);
-    const c=lg.reduce((a,m)=>a+m.cal,0), p=lg.reduce((a,m)=>a+m.pro,0);
+    const _dm2=day.meals||{};
+    const c=Object.values(_dm2).reduce((a,s)=>a+(s?.items?.length>0?s.items.reduce((b,i)=>b+(i.nutrients?.cal||0),0):0),0);
+    const p=Object.values(_dm2).reduce((a,s)=>a+(s?.items?.length>0?s.items.reduce((b,i)=>b+(i.nutrients?.pro||0),0):0),0);
     const cm=(day.cardio||[]).reduce((a,e)=>a+parseInt(e.dur||0),0);
     const prog=PROG[FDYS[i]];
     const sets=day.lift?.ex?Object.values(day.lift.ex).reduce((a,ex)=>a+(ex.sets?.filter(s=>s.done).length||0),0):0;
