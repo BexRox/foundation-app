@@ -41,30 +41,23 @@ function detectPatterns(dayData, allData, prevInsight) {
   const lift = dayData.lift || {};
   const sober = dayData.sober;
 
-  // Calculate nutrition
-  const MEAL_MACROS = { breakfast:{cal:400,pro:25,fib:8}, snack1:{cal:200,pro:15,fib:5}, lunch:{cal:500,pro:30,fib:10}, snack2:{cal:200,pro:15,fib:5}, dinner:{cal:550,pro:35,fib:10} };
-  
-  // Check real food items first (new tracking), fall back to legacy
-  let totalCal = 0, totalPro = 0;
-  const mealIds = ["breakfast","snack1","lunch","snack2","dinner"];
-  for (const id of mealIds) {
-    const slot = meals[id];
-    if (slot?.items?.length > 0) {
-      for (const item of slot.items) {
-        totalCal += item.nutrients?.cal || 0;
-        totalPro += (item.nutrients?.pro || 0);
-      }
-    } else if (slot?.logged) {
-      totalCal += MEAL_MACROS[id]?.cal || 0;
-      totalPro += MEAL_MACROS[id]?.pro || 0;
-    }
+  // Read all meal formats
+  const _rs = (s) => {
+    if (!s?.logged) return {cal:0,pro:0};
+    if (s.pro !== undefined) return {cal:s.cal||0, pro:s.pro||0};
+    if (s.items?.length>0) return {cal:s.items.reduce((a,i)=>a+(i.nutrients?.cal||0),0), pro:s.items.reduce((a,i)=>a+(i.nutrients?.pro||0),0)};
+    return {cal:0,pro:0};
+  };
+  let totalCal=0, totalPro=0;
+  for (const id of ["breakfast","snack1","lunch","snack2","dinner"]) {
+    const n=_rs(meals[id]); totalCal+=n.cal; totalPro+=n.pro;
   }
 
-  const hasBreakfast = (meals.breakfast?.items||[]).length > 0;
-  const hasSnack1    = (meals.snack1?.items||[]).length > 0;
-  const hasLunch     = (meals.lunch?.items||[]).length > 0;
-  const hasSnack2    = (meals.snack2?.items||[]).length > 0;
-  const hasDinner    = (meals.dinner?.items||[]).length > 0;
+  const hasBreakfast = !!meals.breakfast?.logged;
+  const hasSnack1    = !!meals.snack1?.logged;
+  const hasLunch     = !!meals.lunch?.logged;
+  const hasSnack2    = !!meals.snack2?.logged;
+  const hasDinner    = !!meals.dinner?.logged;
 
   const cardioMin = cardio.reduce((a,e) => a+parseInt(e.dur||0), 0);
   const liftSets  = Object.values(lift.ex||{}).reduce((a,ex) => a+(ex.sets?.filter(s=>s.done).length||0), 0);
