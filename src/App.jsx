@@ -725,7 +725,8 @@ Tell her:
     </div>
   );
 }
-function SoberTab({ all, upd, day, ctx }) {
+function SoberTab({ all, upd, day, ctx, setAll }) {
+  const [editDay, setEditDay] = useState(null);
   const now = new Date();
   const year=now.getFullYear(), month=now.getMonth();
   const firstDay=new Date(year,month,1).getDay();
@@ -785,13 +786,15 @@ ${day.sober===false?"5. After logging a drink: what specifically happens in the 
           {Array.from({length:firstDay},(_,i)=><div key={`e${i}`}/>)}
           {Array.from({length:daysInMonth},(_,i)=>{
             const dayNum=i+1;
-            const ds=new Date(year,month,dayNum).toISOString().split("T")[0];
+            const _d2=new Date(year,month,dayNum); const ds=_d2.getFullYear()+"-"+String(_d2.getMonth()+1).padStart(2,"0")+"-"+String(_d2.getDate()).padStart(2,"0");
             const sv=all[ds]?.sober;
             const isToday=ds===todayStr, isFuture=ds>todayStr;
             let bg=T.bg,bdr=T.bdr,tc=T.dim,dot=null;
             if(sv===true){bg=T.gnBg;bdr=T.gnBdr;tc=T.grn;dot="🌟";}
             else if(sv===false){bg=T.rdBg;bdr=T.rdBdr;tc=T.red;dot="💧";}
-            return <div key={dayNum} style={{ textAlign:"center", padding:"8px 2px", background:isToday?T.gBg:isFuture?T.bg:bg, border:`${isToday?"2.5":"1.5"}px solid ${isToday?T.gold:isFuture?T.bdr:bdr}`, borderRadius:10, opacity:isFuture?0.3:1 }}>
+            return <div key={dayNum} 
+              onClick={()=>{ if(!isFuture) setEditDay(ds); }}
+              style={{ textAlign:"center", padding:"8px 2px", background:isToday?T.gBg:isFuture?T.bg:bg, border:`${isToday?"2.5":"1.5"}px solid ${isToday?T.gold:isFuture?T.bdr:bdr}`, borderRadius:10, opacity:isFuture?0.3:1, cursor:isFuture?"default":"pointer", transition:"all 0.15s" }}>
               <div style={{ fontSize:13, fontWeight:isToday?900:600, color:isToday?T.gold:isFuture?T.fnt:tc }}>{dayNum}</div>
               {dot&&!isFuture&&<div style={{ fontSize:10 }}>{dot}</div>}
             </div>;
@@ -801,6 +804,30 @@ ${day.sober===false?"5. After logging a drink: what specifically happens in the 
           {[{dot:"🌟",l:"Sober",c:T.grn},{dot:"💧",l:"Drink",c:T.red}].map(x=><div key={x.l} style={{ display:"flex", alignItems:"center", gap:5 }}><span style={{ fontSize:12 }}>{x.dot}</span><span style={{ fontSize:12, color:x.c, fontWeight:600 }}>{x.l}</span></div>)}
         </div>
       </Card>
+      {/* Past day editor */}
+      {editDay && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ background:T.sur, borderRadius:20, padding:24, width:"100%", maxWidth:380, boxShadow:"0 4px 30px rgba(0,0,0,0.2)" }}>
+            <div style={{ fontSize:17, fontWeight:800, color:T.ink, marginBottom:4 }}>
+              {new Date(editDay+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}
+            </div>
+            <div style={{ fontSize:13, color:T.dim, marginBottom:20 }}>Log this day · no judgment</div>
+            <div style={{ display:"flex", gap:10, marginBottom:14 }}>
+              <button onClick={()=>{ const u={...all}; if(!u[editDay]) u[editDay]={ci:{},meals:{},cardio:[],lift:{ex:{},session:null},watch:{},notes:"",_date:editDay}; u[editDay]={...u[editDay],sober:true}; sd(u); setAll(u); setEditDay(null); }} style={{ flex:1, padding:"16px 8px", border:`2.5px solid ${all[editDay]?.sober===true?T.grn:T.bdr}`, borderRadius:14, background:all[editDay]?.sober===true?T.gnBg:T.bg, cursor:"pointer" }}>
+                <div style={{ fontSize:28, marginBottom:6 }}>🌟</div>
+                <div style={{ fontSize:15, fontWeight:800, color:all[editDay]?.sober===true?T.grn:T.mid, fontFamily:"'Barlow Condensed',sans-serif" }}>SOBER</div>
+              </button>
+              <button onClick={()=>{ const u={...all}; if(!u[editDay]) u[editDay]={ci:{},meals:{},cardio:[],lift:{ex:{},session:null},watch:{},notes:"",_date:editDay}; u[editDay]={...u[editDay],sober:false}; sd(u); setAll(u); setEditDay(null); }} style={{ flex:1, padding:"16px 8px", border:`2.5px solid ${all[editDay]?.sober===false?T.red:T.bdr}`, borderRadius:14, background:all[editDay]?.sober===false?T.rdBg:T.bg, cursor:"pointer" }}>
+                <div style={{ fontSize:28, marginBottom:6 }}>💧</div>
+                <div style={{ fontSize:15, fontWeight:800, color:all[editDay]?.sober===false?T.red:T.mid, fontFamily:"'Barlow Condensed',sans-serif" }}>HAD A DRINK</div>
+              </button>
+            </div>
+            {all[editDay]?.sober!=null && <button onClick={()=>{ const u={...all}; if(u[editDay]){u[editDay]={...u[editDay],sober:null};sd(u);setAll(u);}setEditDay(null); }} style={{ width:"100%", padding:"11px", background:T.bg, border:`1.5px solid ${T.bdr}`, borderRadius:12, color:T.dim, fontSize:13, cursor:"pointer", marginBottom:10 }}>Clear this entry</button>}
+            <button onClick={()=>setEditDay(null)} style={{ width:"100%", padding:"12px", background:T.bg, border:`1.5px solid ${T.bdr}`, borderRadius:12, color:T.mid, fontSize:15, cursor:"pointer", fontWeight:600 }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       <AIBlock
         label="🧠 Sobriety Physiology"
         prompt={soberPrompt}
@@ -1100,7 +1127,7 @@ export default function App() {
         {tab==="lift"  && <LiftTab  day={dayData} upd={upd} all={all} ctx={ctx}/>}
         {tab==="move"  && <MoveTab  day={dayData} upd={upd} ctx={ctx}/>}
         {tab==="fuel"  && <FuelTab  day={dayData} upd={upd} ctx={ctx}/>}
-        {tab==="sober" && <SoberTab all={all} upd={upd} day={dayData} ctx={ctx}/>}
+        {tab==="sober" && <SoberTab all={all} upd={upd} day={dayData} ctx={ctx} setAll={setAll}/>}
         {tab==="week"  && <WeekTab  all={all} ctx={ctx} weekGoals={weekGoals} onSaveGoal={saveWeekGoal}/>}
       </div>
 
